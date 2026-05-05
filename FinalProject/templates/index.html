@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loan Approval Predictor</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 680px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      font-size: 26px;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      color: #6b6080;
+      font-size: 14px;
+    }
+
+    .divider {
+      height: 3px;
+      background: linear-gradient(to right, #6b4fbb, #c46e3a);
+      border-radius: 2px;
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #6b4fbb;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin: 20px 0 12px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+
+    input, select {
+      padding: 10px 14px;
+      border: 1.5px solid #e0d4f7;
+      border-radius: 8px;
+      font-size: 13.5px;
+      color: #1a1a2e;
+      background: #fafafa;
+      transition: border 0.2s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #6b4fbb;
+      background: white;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #6b4fbb, #3d2b6b);
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 28px;
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button:hover  { opacity: 0.92; }
+    button:active { transform: scale(0.99); }
+
+    /* ── Result Box ── */
+    #result {
+      display: none;
+      margin-top: 24px;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    #result.approved {
+      background: #e8f5e9;
+      border: 2px solid #4caf50;
+    }
+
+    #result.rejected {
+      background: #ffebee;
+      border: 2px solid #f44336;
+    }
+
+    .result-icon {
+      font-size: 42px;
+      margin-bottom: 8px;
+    }
+
+    .result-label {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .approved .result-label { color: #2e7d32; }
+    .rejected .result-label { color: #c62828; }
+
+    .result-sub {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 14px;
+    }
+
+    .prob-bar-wrap {
+      background: #e0e0e0;
+      border-radius: 20px;
+      height: 10px;
+      margin: 8px 0 4px;
+      overflow: hidden;
+    }
+
+    .prob-bar {
+      height: 100%;
+      border-radius: 20px;
+      transition: width 0.8s ease;
+    }
+
+    .approved .prob-bar { background: #4caf50; }
+    .rejected .prob-bar { background: #f44336; }
+
+    .prob-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: #777;
+    }
+
+    .loader {
+      display: none;
+      text-align: center;
+      margin-top: 16px;
+      color: #6b4fbb;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <h1>🏦 Loan Approval Predictor</h1>
+      <p>Enter your details below to check loan eligibility instantly</p>
+    </div>
+    <div class="divider"></div>
+
+    <!-- Personal Info -->
+    <div class="section-title">Personal Information</div>
+    <div class="row">
+      <div class="field">
+        <label>No. of Dependents</label>
+        <input type="number" id="no_of_dependents" placeholder="e.g. 2" min="0" max="10"/>
+      </div>
+      <div class="field">
+        <label>Education</label>
+        <select id="education_Graduate">
+          <option value="1">Graduate</option>
+          <option value="0">Not Graduate</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Self Employed</label>
+        <select id="self_employed_No">
+          <option value="1">No</option>
+          <option value="0">Yes</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Financial Info -->
+    <div class="section-title">Financial Details</div>
+    <div class="row">
+      <div class="field">
+        <label>Annual Income (₹)</label>
+        <input type="number" id="income_annum" placeholder="e.g. 9600000"/>
+        <span class="hint">Enter in full (e.g. 9600000)</span>
+      </div>
+      <div class="field">
+        <label>Loan Amount (₹)</label>
+        <input type="number" id="loan_amount" placeholder="e.g. 29900000"/>
+      </div>
+      <div class="field">
+        <label>Loan Term (years)</label>
+        <input type="number" id="loan_term" placeholder="e.g. 12" min="1"/>
+      </div>
+      <div class="field">
+        <label>CIBIL Score</label>
+        <input type="number" id="cibil_score" placeholder="300 – 900" min="300" max="900"/>
+        <span class="hint">Most important factor</span>
+      </div>
+    </div>
+
+    <!-- Asset Info -->
+    <div class="section-title">Asset Values (₹)</div>
+    <div class="row">
+      <div class="field">
+        <label>Residential Assets</label>
+        <input type="number" id="residential_assets_value" placeholder="e.g. 2400000"/>
+      </div>
+      <div class="field">
+        <label>Commercial Assets</label>
+        <input type="number" id="commercial_assets_value" placeholder="e.g. 0"/>
+      </div>
+      <div class="field">
+        <label>Luxury Assets</label>
+        <input type="number" id="luxury_assets_value" placeholder="e.g. 3400000"/>
+      </div>
+      <div class="field">
+        <label>Bank Asset Value</label>
+        <input type="number" id="bank_asset_value" placeholder="e.g. 1000000"/>
+      </div>
+    </div>
+
+    <button onclick="predict()">Check Loan Eligibility</button>
+
+    <div class="loader" id="loader">⏳ Analyzing your application...</div>
+
+    <!-- Result -->
+    <div id="result">
+      <div class="result-icon" id="result-icon"></div>
+      <div class="result-label" id="result-label"></div>
+      <div class="result-sub"  id="result-sub"></div>
+      <div class="prob-bar-wrap">
+        <div class="prob-bar" id="prob-bar" style="width:0%"></div>
+      </div>
+      <div class="prob-labels">
+        <span>Rejected</span>
+        <span>Approved</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    async function predict() {
+        
+        // ── Validation ──────────────────────────────────────────────────────────────
+  const cibil       = parseFloat(document.getElementById("cibil_score").value);
+  const income      = parseFloat(document.getElementById("income_annum").value);
+  const loanAmount  = parseFloat(document.getElementById("loan_amount").value);
+  const loanTerm    = parseFloat(document.getElementById("loan_term").value);
+  const dependents  = parseFloat(document.getElementById("no_of_dependents").value);
+
+  if (!cibil || !income || !loanAmount || !loanTerm) {
+    alert("⚠️ Please fill in all required fields:\nAnnual Income, Loan Amount, Loan Term, and CIBIL Score.");
+    return;
+  }
+
+  if (cibil < 300 || cibil > 900) {
+    alert("⚠️ CIBIL Score must be between 300 and 900.");
+    return;
+  }
+
+  if (loanAmount > 100000000) {
+    alert("⚠️ Loan Amount seems too high. Please enter a realistic value (e.g. 29900000).");
+    return;
+  }
+
+  if (income > 50000000) {
+    alert("⚠️ Annual Income seems too high. Please check the value.");
+    return;
+  }
+
+      // ── Collect inputs ──────────────────────────────────────────────────────
+      const data = {
+        loan_id                    : 1,
+        no_of_dependents           : document.getElementById("no_of_dependents").value           || 0,
+        income_annum               : document.getElementById("income_annum").value               || 0,
+        loan_amount                : document.getElementById("loan_amount").value                || 0,
+        loan_term                  : document.getElementById("loan_term").value                  || 0,
+        cibil_score                : document.getElementById("cibil_score").value                || 0,
+        residential_assets_value   : document.getElementById("residential_assets_value").value   || 0,
+        commercial_assets_value    : document.getElementById("commercial_assets_value").value    || 0,
+        luxury_assets_value        : document.getElementById("luxury_assets_value").value        || 0,
+        bank_asset_value           : document.getElementById("bank_asset_value").value           || 0,
+        education_Graduate         : document.getElementById("education_Graduate").value,
+        self_employed_No           : document.getElementById("self_employed_No").value,
+      };
+
+      // ── Show loader ─────────────────────────────────────────────────────────
+      document.getElementById("loader").style.display = "block";
+      document.getElementById("result").style.display = "none";
+
+      try {
+        const response = await fetch("/predict", {
+          method : "POST",
+          headers: { "Content-Type": "application/json" },
+          body   : JSON.stringify(data)
+        });
+
+        const json = await response.json();
+        document.getElementById("loader").style.display = "none";
+
+        if (json.status === "error") {
+          alert("Error: " + json.message);
+          return;
+        }
+
+        // ── Show result ───────────────────────────────────────────────────────
+        const box = document.getElementById("result");
+        box.style.display = "block";
+
+        const isApproved = json.prediction === "Approved";
+        box.className     = isApproved ? "approved" : "rejected";
+
+        document.getElementById("result-icon").textContent  =
+          isApproved ? "✅" : "❌";
+        document.getElementById("result-label").textContent =
+          isApproved ? "Loan Approved!" : "Loan Rejected";
+        document.getElementById("result-sub").textContent   =
+          isApproved
+            ? `Confidence: ${json.approved_prob}% chance of approval`
+            : `Confidence: ${json.rejected_prob}% chance of rejection`;
+
+        // Animate probability bar
+        setTimeout(() => {
+          document.getElementById("prob-bar").style.width =
+            isApproved ? json.approved_prob + "%" : json.rejected_prob + "%";
+        }, 100);
+
+      } catch (err) {
+        document.getElementById("loader").style.display = "none";
+        alert("Something went wrong. Make sure Flask server is running.");
+      }
+    }
+  </script>
+</body>
+</html>
